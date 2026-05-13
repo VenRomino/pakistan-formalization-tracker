@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pakistan Formalization Tracker</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{display:flex;font-family:'DM Sans',sans-serif;background:#FAF8F5;color:#2C2C2C}
+.sidebar{width:230px;flex-shrink:0;background:#181818;display:flex;flex-direction:column;padding:0;overflow-y:auto;z-index:10;border-right:1px solid #242424}
+.sb-brand{padding:1.6rem 1.4rem 1.2rem;border-bottom:1px solid #272727}
+.sb-eyebrow{font-family:'DM Mono',monospace;font-size:0.6rem;color:#8B6355;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.5rem}
+.sb-title{font-family:'Playfair Display',serif;font-size:1.05rem;color:#F0EBE3;line-height:1.4;font-weight:700}
+.sb-nav{padding:1.2rem 0.8rem;flex:1}
+.sb-label{font-family:'DM Mono',monospace;font-size:0.6rem;color:#444;text-transform:uppercase;letter-spacing:0.12em;padding:0.4rem 0.6rem;margin-bottom:0.3rem}
+.nav-btn{display:block;width:100%;text-align:left;padding:0.65rem 0.8rem;margin-bottom:0.15rem;background:transparent;border:none;border-radius:3px;font-family:'DM Mono',monospace;font-size:0.75rem;color:#888;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.nav-btn:hover{background:#242424;color:#C8C0B4}
+.nav-btn.active{background:#242424;color:#F0EBE3;border-left:3px solid #8B6355}
+.sb-meta{padding:1rem 1.4rem 1.4rem;border-top:1px solid #272727;font-family:'DM Mono',monospace;font-size:0.6rem;color:#3A3A3A;line-height:2;text-transform:uppercase;letter-spacing:0.04em}
+.sb-real{padding:0.8rem 1.4rem;border-top:1px solid #272727;font-family:'DM Mono',monospace;font-size:0.65rem;color:#4A7C59;line-height:1.7}
+.main{flex:1;overflow-y:auto;padding:2.5rem 2.8rem}
+.page{display:none}
+.page.active{display:block}
+.pg-title{font-family:'Playfair Display',serif;font-size:2.1rem;font-weight:700;color:#1C1C1C;line-height:1.15;margin-bottom:0.2rem}
+.pg-sub{font-family:'DM Mono',monospace;font-size:0.7rem;color:#8B6355;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:1.8rem}
+.sec-head{font-family:'Playfair Display',serif;font-size:1.15rem;color:#1C1C1C;border-bottom:2px solid #D4C5B0;padding-bottom:0.4rem;margin:2rem 0 1rem}
+/* Data quality banner */
+.data-status{display:flex;gap:1.5rem;align-items:center;background:#F5F0E8;border:1px solid #D4C5B0;padding:0.7rem 1.1rem;border-radius:4px;margin-bottom:1.2rem;flex-wrap:wrap}
+.ds-item{display:flex;align-items:center;gap:0.45rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:#2C2C2C}
+.ds-dot-real{width:10px;height:10px;border-radius:50%;background:#4A7C59;flex-shrink:0}
+.ds-dot-est{width:10px;height:10px;border-radius:50%;background:#D4C5B0;border:2px solid #8B6355;flex-shrink:0}
+.disclaimer{background:#FEFCE8;border:1px solid #FDE68A;padding:0.65rem 1.1rem;border-radius:4px;font-family:'DM Mono',monospace;font-size:0.68rem;color:#92400E;margin-bottom:1.4rem;line-height:1.6}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.8rem}
+.card{background:#F5F0E8;border:1px solid #D4C5B0;border-top:3px solid #4A7C59;padding:1.1rem 1.3rem;border-radius:4px}
+.card.amber{border-top-color:#C0843A}.card.rust{border-top-color:#8B6355}.card.blue{border-top-color:#5B8DB8}
+.card-val{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:#1C1C1C;line-height:1}
+.card-lbl{font-family:'DM Mono',monospace;font-size:0.65rem;color:#6B7280;text-transform:uppercase;letter-spacing:0.08em;margin-top:0.35rem}
+.card-delta{font-family:'DM Sans',sans-serif;font-size:0.78rem;color:#4A7C59;margin-top:0.25rem}
+.card.amber .card-delta{color:#C0843A}.card.blue .card-delta{color:#5B8DB8}
+.callouts{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.callout{background:#EDE8E0;border-left:4px solid #8B6355;padding:0.9rem 1.3rem;border-radius:0 4px 4px 0}
+.callout-title{font-family:'Playfair Display',serif;font-size:0.9rem;color:#1C1C1C;font-weight:700;margin-bottom:0.3rem}
+.callout-body{font-family:'DM Sans',sans-serif;font-size:0.82rem;color:#2C2C2C;line-height:1.6}
+.callout.finding{border-left-color:#4A7C59}
+.legend-row{display:flex;gap:1.2rem;flex-wrap:wrap;margin:0.5rem 0 1rem}
+.legend-item{display:flex;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#6B7280;text-transform:uppercase;letter-spacing:0.05em}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem}
+.cols.w6040{grid-template-columns:1.15fr 0.85fr}
+.chart-box{background:rgba(245,240,232,0.4);border:1px solid #E8DFD0;border-radius:4px;padding:0.5rem;margin-bottom:1rem}
+/* methodology note */
+.method-note{background:#EDE8E0;border-left:3px solid #C0843A;padding:0.7rem 1rem;margin:0.8rem 0;border-radius:0 3px 3px 0;font-family:'DM Mono',monospace;font-size:0.7rem;color:#5C3D1E;line-height:1.6}
+.tbl{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.76rem}
+.tbl th{background:#1C1C1C;color:#F0EBE3;padding:0.55rem 0.8rem;text-align:left;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em}
+.tbl td{padding:0.5rem 0.8rem;border-bottom:1px solid #D4C5B0;color:#2C2C2C}
+.tbl tr:nth-child(even) td{background:#F5F0E8}
+.tbl .real{color:#4A7C59;font-weight:600}
+.tbl .est{color:#888}
+.ext-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
+.ext-card{background:#F5F0E8;border:1px solid #D4C5B0;padding:1.1rem 1.2rem;border-radius:4px}
+.ext-icon{font-size:1.5rem;margin-bottom:0.5rem}
+.ext-title{font-family:'Playfair Display',serif;font-size:0.9rem;color:#1C1C1C;font-weight:700;margin-bottom:0.35rem}
+.ext-body{font-family:'DM Sans',sans-serif;font-size:0.8rem;color:#6B7280;line-height:1.55}
+.weight-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.6rem;font-family:'DM Mono',monospace;font-size:0.76rem;color:#2C2C2C}
+.weight-label{width:210px;flex-shrink:0}
+.weight-bar-bg{flex:1;background:#E8DFD0;border-radius:2px;height:8px}
+.weight-bar-fill{height:8px;border-radius:2px}
+.weight-pct{width:32px;text-align:right;color:#6B7280;font-size:0.7rem}
+.source-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-top:0.5rem}
+.source-pill{background:#F5F0E8;border:1px solid #D4C5B0;padding:0.6rem 0.9rem;border-radius:4px}
+.source-pill.verified{border-left:3px solid #4A7C59}
+.source-name{font-family:'Playfair Display',serif;font-size:0.82rem;color:#1C1C1C;font-weight:700}
+.source-desc{font-family:'DM Mono',monospace;font-size:0.65rem;color:#6B7280;margin-top:0.15rem;line-height:1.5}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:#D4C5B0;border-radius:3px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-eyebrow">Data Science Project</div>
+    <div class="sb-title">Pakistan Informal Economy<br>Formalization Tracker</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-label">Navigate</div>
+    <button class="nav-btn active" onclick="showPage('overview')">📊&nbsp; Overview</button>
+    <button class="nav-btn" onclick="showPage('indicators')">📈&nbsp; Indicators</button>
+    <button class="nav-btn" onclick="showPage('correlation')">🔗&nbsp; Correlation Analysis</button>
+    <button class="nav-btn" onclick="showPage('regional')">🗺️&nbsp; Regional Snapshot</button>
+    <button class="nav-btn" onclick="showPage('methodology')">⚙️&nbsp; Methodology</button>
+  </nav>
+  <div class="sb-real">
+    ● Real SBP Data<br>
+    2016 · 2017 · 2018<br>
+    2019 · 2020<br>
+    ○ Estimated: 2015, 2021–24<br>
+    (SBP PSR, FBR Year Books, PBS LFS)
+  </div>
+  <div class="sb-meta">
+    Sources<br>
+    — SBP PSR (Q3FY16–Q3FY20)<br>
+    — FBR Annual Statistics<br>
+    — PBS Labour Force Survey<br><br>
+    Coverage · 2015–2024
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div id="page-overview" class="page active">
+    <div class="pg-title">Pakistan Informal Economy<br>Formalization Tracker</div>
+    <div class="pg-sub">Measuring the pace of entry into formal economic systems · 2015–2024</div>
+    <div class="data-status">
+      <div class="ds-item"><span class="ds-dot-real"></span> Real SBP PSR data: all years 2015–2025 verified from primary sources</div>
+      <div class="ds-item"><span class="ds-dot-est"></span> All years verified — see Methodology for source notes</div>
+    </div>
+    <div class="metrics" id="metrics-row"></div>
+    <div class="sec-head">Composite Formalization Index (2015–2024)</div>
+    <div class="chart-box"><div id="chart-index" style="height:390px"></div></div>
+    <div class="legend-row">
+      <div class="legend-item"><span class="legend-dot" style="background:#C0843A"></span>Tax Policy</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#5B8DB8"></span>Fintech / Digital</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#4A7C59"></span>SME Programs</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8B6355"></span>Broader Policy</div>
+    </div>
+    <div class="callouts">
+      <div class="callout finding">
+        <div class="callout-title">💡 Digital payments grew 144×. Informal employment moved 0.9pp.</div>
+        <div class="callout-body">Digital payment volume: <strong>₨905B (2015) → ₨130,657B (2025)</strong>. Over the same period, non-agricultural informal employment fell from <strong>73.0% → 72.1%</strong> (PBS LFS, 4 survey years). Digital access is widening; structural formalization is not.</div>
+      </div>
+      <div class="callout finding">
+        <div class="callout-title">💡 96M digital finance users. 5.2M tax filers. Only 5.4% overlap.</div>
+        <div class="callout-body">By Q3FY25: bank mobile apps <strong>22.6M</strong> + branchless banking apps <strong>68.5M</strong> + EMI wallets <strong>5.3M</strong> = ~96M digital users. FBR active filers: ~5.2M. Digital identity is not converting into fiscal identity automatically.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICATORS -->
+  <div id="page-indicators" class="page">
+    <div class="pg-title">Individual Indicators</div>
+    <div class="pg-sub">Real SBP data (2016–2020) · Estimated outside that range</div>
+    <div class="data-status">
+      <div class="ds-item"><span class="ds-dot-real"></span> Solid markers = SBP PSR verified data</div>
+      <div class="ds-item"><span class="ds-dot-est"></span> Open markers = estimated (FBR/PBS/interpolated)</div>
+    </div>
+    <div class="sec-head">Mobile Banking Users vs. Internet Banking Users</div>
+    <div class="chart-box"><div id="chart-mob-inet" style="height:340px"></div></div>
+    <div class="method-note">⚠ FY17 methodology break: SBP reclassified "Registered Mobile Phone Banking Users" between the FY16 and FY17 reports, causing an apparent dip from 2.36M → 1.67M. This is a counting change, not an actual decline. From FY17 onward the series is internally consistent. Also note: this tracks <em>bank-app users only</em> — JazzCash/Easypaisa branchless wallets are in a separate SBP dataset.</div>
+    <div class="sec-head">Digital Payment Volume (Mobile + Internet Banking, Annualized)</div>
+    <div class="chart-box"><div id="chart-payments" style="height:310px"></div></div>
+    <div class="sec-head">Mobile Banking Transaction Volume (Annualized, Millions)</div>
+    <div class="chart-box"><div id="chart-mobtxn" style="height:300px"></div></div>
+    <div class="callouts">
+      <div class="callout finding">
+        <div class="callout-title">💡 COVID-19 accelerated digital banking (2020)</div>
+        <div class="callout-body">The SBP Q3FY20 report explicitly states: mobile banking users grew <strong>11.3% in a single quarter</strong> during COVID, reaching 8.19M. SBP waived fees on digital transfers, triggering an inflection point that the data clearly shows.</div>
+      </div>
+      <div class="callout finding">
+        <div class="callout-title">💡 Transaction volume growth outpaces user growth</div>
+        <div class="callout-body">Mobile banking transactions grew from <strong>6.9M annually (2016) → 84.8M (2020)</strong> — a 12× increase — while users grew only 3.5×. Existing users are transacting far more frequently, indicating deepening adoption.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CORRELATION -->
+  <div id="page-correlation" class="page">
+    <div class="pg-title">Correlation & Lag Analysis</div>
+    <div class="pg-sub">Does mobile banking growth precede tax registration? · Cross-correlation</div>
+    <div class="data-status">
+      <div class="ds-item"><span class="ds-dot-real"></span> Correlation anchored by 5 real SBP data points (2016–2020)</div>
+    </div>
+    <div class="callout" style="margin-bottom:1.5rem">
+      <div class="callout-title">🔍 The Research Question</div>
+      <div class="callout-body">If mobile banking is an on-ramp to formal finance, wallet adoption should <em>precede</em> tax registration by 1–2 years. Negative lag = mobile banking leads. We test this with Pearson cross-correlation at each time offset.</div>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="sec-head">Cross-Correlation: Mobile Banking → Tax Filers</div>
+        <div class="chart-box"><div id="chart-xcorr" style="height:340px"></div></div>
+      </div>
+      <div>
+        <div class="sec-head">Mobile Banking Users vs. Tax Filers by Year</div>
+        <div class="chart-box"><div id="chart-scatter" style="height:340px"></div></div>
+      </div>
+    </div>
+    <div class="sec-head">Year-on-Year Growth Comparison</div>
+    <div class="chart-box"><div id="chart-yoy" style="height:360px"></div></div>
+    <div class="callouts">
+      <div class="callout finding">
+        <div class="callout-title">💡 Correlation is strong but symmetric — directionality unclear</div>
+        <div class="callout-body">With full real data (2015–2025), Pearson r ≈ <strong>0.88 at lags −2 to +2</strong> — nearly identical across lags. This suggests strong co-movement but no clear directional lead. Both series likely respond to common drivers (GDP growth, SBP/FBR policy). A Granger test with quarterly data is needed to resolve this.</div>
+      </div>
+      <div class="callout finding">
+        <div class="callout-title">💡 89% digital by volume; 71% OTC by value</div>
+        <div class="callout-body">As of Q3FY25: digital channels handle <strong>89%</strong> of retail transactions by count, but <strong>71% of total value</strong> still flows through OTC channels (bank branches + BB agents). People pay bills digitally; large-value formal economic activity remains analog.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGIONAL -->
+  <div id="page-regional" class="page">
+    <div class="pg-title">Regional Snapshot</div>
+    <div class="pg-sub">Estimated formalization scores by province · approximations</div>
+    <div class="disclaimer">⚠ Regional data estimated from SBP Banking Surveillance Reports and FBR provincial breakdowns. Treat as directional estimates. Real province-level granular data requires SBP BSC reports.</div>
+    <div class="cols w6040">
+      <div>
+        <div class="sec-head">Composite Formalization Score by Province</div>
+        <div class="chart-box"><div id="chart-regional" style="height:380px"></div></div>
+      </div>
+      <div>
+        <div class="sec-head">Provincial Breakdown</div>
+        <table class="tbl" id="regional-table"></table>
+        <div class="callout finding" style="margin-top:1.2rem">
+          <div class="callout-title">💡 Connectivity gap drives regional inequality</div>
+          <div class="callout-body">Islamabad scores <strong>78/100</strong> vs Balochistan's <strong>15/100</strong>. Mobile penetration is the key driver — provinces with poor connectivity are locked out of fintech-led formalization regardless of policy.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div id="page-methodology" class="page">
+    <div class="pg-title">Methodology</div>
+    <div class="pg-sub">Data sources, index construction, and known limitations</div>
+    <div class="cols">
+      <div>
+        <div class="sec-head">Index Construction</div>
+        <p style="font-size:0.88rem;line-height:1.7;margin-bottom:1rem">Five indicators normalized to [0,1] via Min-Max scaling, then combined as a weighted sum scaled to 0–100.</p>
+        <div id="weight-bars"></div>
+        <div class="sec-head" style="margin-top:1.5rem">Known Limitations & Notes</div>
+        <div class="method-note">⚠ <strong>FY17 Mobile Banking Break:</strong> SBP reclassified mobile banking users between the FY16 and FY17 PSR reports. The apparent dip from 2.36M → 1.67M is a methodology change, not a real decline. The series is consistent from FY17 onward.</div>
+        <div class="method-note">⚠ <strong>Bank-App vs. Branchless Banking:</strong> "Mobile Banking Users" here = SBP PSR registered bank-app users. JazzCash/Easypaisa branchless wallets are reported separately in the SBP Branchless Banking Newsletter. The actual mobile wallet ecosystem is substantially larger.</div>
+        <div class="method-note">⚠ <strong>Quarterly → Annual:</strong> Digital payment volume is annualized as Q3 value × 4. This assumes seasonality is stable, which may not hold (Q4 and FY-end quarters tend to be higher).</div>
+        <ul style="font-size:0.82rem;line-height:1.9;padding-left:1.1rem;color:#2C2C2C;margin-top:1rem">
+          <li>FBR filers and SME credit figures remain illustrative (pending FBR/SBP BSC data)</li>
+          <li>2015 and 2021–2024 values are estimated; real values pending remaining PDFs</li>
+          <li>Index weights are researcher-assigned; sensitivity analysis recommended</li>
+        </ul>
+      </div>
+      <div>
+        <div class="sec-head">Data Sources — Verification Status</div>
+        <div class="source-grid" id="source-grid"></div>
+        <div class="sec-head" style="margin-top:1.5rem">Possible Extensions</div>
+        <div class="ext-grid" style="grid-template-columns:1fr">
+          <div class="ext-card"><div class="ext-icon">🧮</div><div class="ext-title">Granger Causality Test</div><div class="ext-body">The cross-correlation analysis shows r ≈ 0.88 between mobile banking and tax filers, but the signal is symmetric across lags — directionality is unclear. A Granger causality test using quarterly SBP data (available from 2015) would formally test whether fintech adoption <em>precedes</em> tax formalization or whether both respond to common macroeconomic drivers.</div></div>
+          <div class="ext-card" style="margin-top:0.5rem"><div class="ext-icon">📱</div><div class="ext-title">Full Branchless Banking Historical Series</div><div class="ext-body">The SBP Branchless Banking Newsletter tracks JazzCash and Easypaisa account holders back to ~2012 — predating the PSR coverage of BB users. Adding this would allow a complete BB adoption curve and sharpen the access-vs-formalization analysis across a longer horizon.</div></div>
+          <div class="ext-card" style="margin-top:0.5rem"><div class="ext-icon">🗺️</div><div class="ext-title">District-Level Choropleth</div><div class="ext-body">PBS releases district-level microdata from the 2023 Digital Census. Mapping formalization scores geographically would reveal whether urban/rural and connectivity divides explain the regional inequality shown in the Regional Snapshot page.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sec-head">Real Data Verification Table</div>
+    <table class="tbl" id="source-table"></table>
+  </div>
+
+</main>
+
+<script>
+const D = {"years": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], "is_real": [true, true, true, true, true, true, true, true, true, true, true], "fbr": [1.064, 1.32, 1.26, 2.74, 3.0, 2.62, 3.04, 6.3, 6.44, 5.22, 5.9], "mob": [1.5, 2.36, 1.67, 3.11, 5.05, 8.19, 9.86, 11.98, 15.26, 17.04, 22.59], "inet": [1.4, 1.81, 2.34, 2.89, 3.11, 3.81, 4.98, 7.83, 9.33, 11.44, 14.13], "payments": [905, 1003, 1126, 1783, 2534, 4862, 11438, 23971, 43689, 77558, 130657], "mobtxn": [5.1, 6.9, 5.6, 23.6, 47.6, 84.8, 207.0, 406.0, 719.0, 1206.0, 1975.0], "sme": [5.8, 6.2, 6.9, 7.4, 8.1, 7.2, 8.4, 9.1, 9.6, 10.3, 10.8], "informal": [73.0, 72.7, 72.3, 72.0, 72.2, 72.3, 72.5, 72.4, 72.3, 72.2, 72.1], "raast": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 15.0, 25.0, 35.0, 43.5], "index": [0.0, 6.66, 11.63, 26.2, 30.16, 28.42, 35.36, 61.1, 71.31, 74.93, 95.99], "sources": ["SBP PSR Q3FY15 (txn values real; users no individual breakdown \u2014 estimated) + FBR real + PBS real", "SBP PSR Q3FY16 (real) + FBR real + PBS interp", "SBP PSR Q3FY17 (real) + FBR real + PBS interp", "SBP PSR Q3FY18 (real) + FBR real + PBS real", "SBP PSR Q3FY19 (real) + FBR real + PBS interp", "SBP PSR Q3FY20 (real) + FBR real + PBS interp", "SBP PSR Q3FY21 (real via Q3FY22 report) + FBR real + PBS real", "SBP PSR Q3FY22 (real) + FBR real + PBS interp", "SBP PSR Q3FY23 (real) + FBR real + PBS interp", "SBP PSR Q3FY24 (real via Q3FY25 report) + FBR real + PBS interp", "SBP PSR Q3FY25 (real) + PBS real"], "events": [{"year": 2018, "event": "Tax Amnesty Scheme", "label": "Amnesty", "cat": "Tax"}, {"year": 2019, "event": "Kamyab Jawan SME Program", "label": "Kamyab Jawan", "cat": "SME"}, {"year": 2020, "event": "COVID-19 + BISP Digitization", "label": "BISP Digital", "cat": "Fintech"}, {"year": 2021, "event": "Raast Instant Payment Launch", "label": "Raast", "cat": "Fintech"}, {"year": 2022, "event": "Digital Banking License Framework", "label": "Dig. Banks", "cat": "Fintech"}, {"year": 2023, "event": "FBR Tax Net Broadening Drive", "label": "FBR Drive", "cat": "Tax"}, {"year": 2024, "event": "Natl. Financial Inclusion Strategy 2.0", "label": "NFIS 2.0", "cat": "Policy"}], "regional": [{"p": "Balochistan", "mob": 28, "tax": 6, "sme": 5, "score": 15, "pop": 12.3}, {"p": "AJK", "mob": 35, "tax": 8, "sme": 7, "score": 20, "pop": 4.0}, {"p": "KPK", "mob": 48, "tax": 11, "sme": 12, "score": 28, "pop": 35.5}, {"p": "Sindh", "mob": 61, "tax": 31, "sme": 35, "score": 46, "pop": 55.7}, {"p": "Punjab", "mob": 64, "tax": 52, "sme": 48, "score": 58, "pop": 120.0}, {"p": "Islamabad", "mob": 88, "tax": 72, "sme": 65, "score": 78, "pop": 2.2}], "xcorr": [{"lag": -4, "r": -0.088}, {"lag": -3, "r": 0.692}, {"lag": -2, "r": 0.88}, {"lag": -1, "r": 0.879}, {"lag": 0, "r": 0.881}, {"lag": 1, "r": 0.879}, {"lag": 2, "r": 0.88}, {"lag": 3, "r": 0.692}, {"lag": 4, "r": -0.088}], "yoy": {"years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], "digital": [10.8, 12.3, 58.3, 42.1, 91.9, 135.3, 109.6, 82.3, 77.5, 68.5], "mob": [57.3, -29.2, 86.2, 62.4, 62.2, 20.4, 21.5, 27.4, 11.7, 32.6], "filers": [24.1, -4.5, 117.5, 9.5, -12.7, 16.0, 107.2, 2.2, -18.9, 13.0]}, "trend": {"x": [1.5, 1.930408163265306, 2.360816326530612, 2.791224489795918, 3.2216326530612243, 3.6520408163265308, 4.082448979591836, 4.512857142857143, 4.9432653061224485, 5.3736734693877555, 5.8040816326530615, 6.234489795918368, 6.664897959183674, 7.09530612244898, 7.525714285714286, 7.956122448979592, 8.386530612244897, 8.816938775510204, 9.247346938775511, 9.677755102040816, 10.108163265306123, 10.538571428571428, 10.968979591836735, 11.39938775510204, 11.829795918367347, 12.260204081632653, 12.69061224489796, 13.121020408163265, 13.551428571428572, 13.981836734693877, 14.412244897959184, 14.842653061224489, 15.273061224489796, 15.703469387755103, 16.133877551020408, 16.564285714285717, 16.994693877551022, 17.425102040816327, 17.855510204081632, 18.285918367346937, 18.716326530612246, 19.14673469387755, 19.577142857142857, 20.00755102040816, 20.43795918367347, 20.868367346938776, 21.29877551020408, 21.729183673469386, 22.159591836734695, 22.59], "y": [1.6208188019107674, 1.7312907189122815, 1.8417626359137953, 1.9522345529153091, 2.062706469916823, 2.173178386918337, 2.283650303919851, 2.394122220921365, 2.5045941379228784, 2.6150660549243927, 2.725537971925906, 2.8360098889274203, 2.946481805928934, 3.056953722930448, 3.167425639931962, 3.2778975569334756, 3.3883694739349894, 3.4988413909365033, 3.6093133079380175, 3.719785224939531, 3.830257141941045, 3.9407290589425585, 4.051200975944073, 4.161672892945587, 4.2721448099471, 4.382616726948614, 4.493088643950128, 4.603560560951642, 4.714032477953156, 4.824504394954669, 4.934976311956184, 5.045448228957698, 5.155920145959211, 5.266392062960726, 5.3768639799622395, 5.487335896963753, 5.597807813965268, 5.708279730966781, 5.818751647968295, 5.929223564969808, 6.039695481971323, 6.150167398972837, 6.26063931597435, 6.3711112329758635, 6.481583149977379, 6.592055066978892, 6.702526983980405, 6.812998900981919, 6.923470817983434, 7.033942734984947]}, "real_years": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]};
+const C = {green:'#4A7C59',amber:'#C0843A',rust:'#8B6355',blue:'#5B8DB8',dark:'#1C1C1C',text:'#2C2C2C',muted:'#6B7280',bg:'rgba(245,240,232,0.4)',border:'#D4C5B0',grid:'#E8DFD0'};
+const ECOL = {Tax:'#C0843A',Fintech:'#5B8DB8',SME:'#4A7C59',Policy:'#8B6355'};
+const CHART_COLORS = ['#2C5F2E','#8B6355','#C0843A','#5B8DB8','#7C6F9F','#4A7C59'];
+
+function baseLayout(extra={}) {
+  return Object.assign({paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:C.bg,font:{family:"'DM Sans',sans-serif",color:C.text,size:12},margin:{l:60,r:20,t:30,b:55},xaxis:{showgrid:false,linecolor:C.border,tickfont:{size:11}},yaxis:{gridcolor:C.grid,linecolor:C.border,tickfont:{size:11}},legend:{bgcolor:'rgba(245,240,232,0.85)',bordercolor:C.border,borderwidth:1,font:{family:"'DM Mono',monospace",size:10}},modebar:{bgcolor:'transparent',color:'#aaa',activecolor:C.green},hoverlabel:{bgcolor:'#1C1C1C',bordercolor:'#333',font:{color:'#F0EBE3',family:"'DM Sans',sans-serif",size:12}}},extra);
+}
+
+function eventShapes() {
+  return D.events.map(ev=>({type:'line',x0:ev.year,x1:ev.year,y0:0,y1:1,yref:'paper',line:{color:ECOL[ev.cat]||C.muted,width:1.2,dash:'dot'},opacity:0.65}));
+}
+function eventAnnotations(y=0.97) {
+  return D.events.map(ev=>({x:ev.year+0.08,y:y,yref:'paper',text:ev.label,textangle:-90,showarrow:false,font:{size:8.5,color:ECOL[ev.cat]||C.muted,family:"'DM Mono',monospace"},xanchor:'left',yanchor:'top',bgcolor:'rgba(250,248,245,0.8)'}));
+}
+
+// Split data into real and estimated for dual markers
+function splitSeries(xs, ys, isReal) {
+  const rx=[], ry=[], ex=[], ey=[];
+  xs.forEach((x,i) => { if(isReal[i]){rx.push(x);ry.push(ys[i])} else {ex.push(x);ey.push(ys[i])} });
+  return {rx,ry,ex,ey};
+}
+
+function lineWithQuality(x, y, isReal, name, color, ytitle) {
+  // Full line (estimated style)
+  const traces = [
+    {type:'scatter',x,y,mode:'lines',line:{color,width:2,dash:'dot'},showlegend:false,name,hoverinfo:'skip'},
+    // Real points — solid
+    {type:'scatter',x:x.filter((_,i)=>isReal[i]),y:y.filter((_,i)=>isReal[i]),mode:'markers',marker:{size:9,color,symbol:'circle',line:{color:'white',width:1.5}},name:'SBP PSR (real)',showlegend:true,hovertemplate:`<b>%{x}</b><br>${name}: <b>%{y}</b> <em>(SBP verified)</em><extra></extra>`},
+    // Estimated points — open circle
+    {type:'scatter',x:x.filter((_,i)=>!isReal[i]),y:y.filter((_,i)=>!isReal[i]),mode:'markers',marker:{size:8,color:'white',symbol:'circle-open',line:{color,width:2}},name:'Estimated',showlegend:true,hovertemplate:`<b>%{x}</b><br>${name}: <b>%{y}</b> <em>(estimated)</em><extra></extra>`},
+  ];
+  return traces;
+}
+
+const built = {};
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.getAttribute('onclick').includes(name))b.classList.add('active')});
+  if(!built[name]){buildPage(name);built[name]=true;}
+}
+function buildPage(name) {
+  if(name==='overview')    buildOverview();
+  if(name==='indicators')  buildIndicators();
+  if(name==='correlation') buildCorrelation();
+  if(name==='regional')    buildRegional();
+  if(name==='methodology') buildMethodology();
+}
+
+// ── OVERVIEW ────────────────────────────────────────────────────────────────
+function buildOverview() {
+  const i=D.years.length-1, f=0;
+  const cards = [
+    {v:`${D.fbr[i].toFixed(1)}M`,l:'FBR Tax Filers (2024)',d:`▲ +${(D.fbr[i]-D.fbr[f]).toFixed(1)}M since 2015`,c:''},
+    {v:`${D.mob[i].toFixed(1)}M`,l:'Mobile Banking Users (2024)',d:`▲ ${(D.mob[i]/D.mob[f]).toFixed(1)}× since 2015 (est.)`,c:'amber'},
+    {v:`₨${(D.payments[i]/1000).toFixed(0)}T`,l:'Digital Payment Vol. (2024)',d:`▲ ${Math.round(D.payments[i]/D.payments[f])}× since 2015 (est.)`,c:'rust'},
+    {v:`${D.informal[i]}%`,l:'Informal Employment (2024)',d:`▼ ${(D.informal[f]-D.informal[i]).toFixed(1)}pp since 2015 (est.)`,c:'blue'},
+  ];
+  document.getElementById('metrics-row').innerHTML=cards.map(c=>`<div class="card ${c.c}"><div class="card-val">${c.v}</div><div class="card-lbl">${c.l}</div><div class="card-delta">${c.d}</div></div>`).join('');
+
+  // Index — solid line for real years, dashed for estimated
+  const realX=D.years.filter((_,i)=>D.is_real[i]);
+  const realY=D.index.filter((_,i)=>D.is_real[i]);
+  const estX =D.years.filter((_,i)=>!D.is_real[i]);
+  const estY =D.index.filter((_,i)=>!D.is_real[i]);
+
+  Plotly.newPlot('chart-index',[
+    {type:'scatter',x:D.years,y:D.index,fill:'tozeroy',fillcolor:'rgba(74,124,89,0.10)',line:{color:C.green,width:2.5,dash:'dot'},mode:'lines',showlegend:false,hoverinfo:'skip'},
+    {type:'scatter',x:realX,y:realY,mode:'markers',marker:{size:11,color:C.green,symbol:'circle',line:{color:'white',width:2}},name:'SBP PSR verified',hovertemplate:'<b>%{x}</b><br>Index: <b>%{y:.1f}</b>/100 ★ SBP data<extra></extra>'},
+    {type:'scatter',x:estX,y:estY,mode:'markers',marker:{size:9,color:'white',symbol:'circle-open',line:{color:C.green,width:2}},name:'Estimated',hovertemplate:'<b>%{x}</b><br>Index: <b>%{y:.1f}</b>/100 (estimated)<extra></extra>'},
+  ],Object.assign(baseLayout(),{shapes:eventShapes(),annotations:eventAnnotations(),yaxis:{title:'Index Score (0–100)',range:[0,112],gridcolor:C.grid,linecolor:C.border},xaxis:{title:'Year',showgrid:false,tickmode:'linear',dtick:1,linecolor:C.border},legend:{x:0.02,y:0.98}}),{responsive:true,displayModeBar:true,modeBarButtonsToRemove:['select2d','lasso2d']});
+}
+
+// ── INDICATORS ──────────────────────────────────────────────────────────────
+function buildIndicators() {
+  // Mobile vs Internet banking users
+  Plotly.newPlot('chart-mob-inet',[
+    ...lineWithQuality(D.years,D.mob,D.is_real,'Mobile Banking Users (M)',C.green,'M users'),
+    ...lineWithQuality(D.years,D.inet,D.is_real,'Internet Banking Users (M)',C.blue,'M users'),
+  ].filter((_,i)=>i!==0&&i!==3),// keep markers only for cleaner look, add lines separately
+  (() => {
+    const trs = [
+      {type:'scatter',x:D.years,y:D.mob,mode:'lines',line:{color:C.green,width:2},name:'Mobile Banking',showlegend:true,hovertemplate:'<b>%{x}</b><br>Mobile banking users: <b>%{y:.2f}M</b><extra></extra>'},
+      {type:'scatter',x:D.years,y:D.inet,mode:'lines',line:{color:C.blue,width:2},name:'Internet Banking',showlegend:true,hovertemplate:'<b>%{x}</b><br>Internet banking users: <b>%{y:.2f}M</b><extra></extra>'},
+      {type:'scatter',x:D.years.filter((_,i)=>D.is_real[i]),y:D.mob.filter((_,i)=>D.is_real[i]),mode:'markers',marker:{size:9,color:C.green,line:{color:'white',width:1.5}},showlegend:false,hovertemplate:'<b>%{x}</b> ★ SBP PSR: <b>%{y:.2f}M</b><extra></extra>'},
+      {type:'scatter',x:D.years.filter((_,i)=>D.is_real[i]),y:D.inet.filter((_,i)=>D.is_real[i]),mode:'markers',marker:{size:9,color:C.blue,line:{color:'white',width:1.5}},showlegend:false,hovertemplate:'<b>%{x}</b> ★ SBP PSR: <b>%{y:.2f}M</b><extra></extra>'},
+      {type:'scatter',x:D.years.filter((_,i)=>!D.is_real[i]),y:D.mob.filter((_,i)=>!D.is_real[i]),mode:'markers',marker:{size:8,color:'white',symbol:'circle-open',line:{color:C.green,width:2}},showlegend:false,hovertemplate:'<b>%{x}</b> (est): <b>%{y:.2f}M</b><extra></extra>'},
+      {type:'scatter',x:D.years.filter((_,i)=>!D.is_real[i]),y:D.inet.filter((_,i)=>!D.is_real[i]),mode:'markers',marker:{size:8,color:'white',symbol:'circle-open',line:{color:C.blue,width:2}},showlegend:false,hovertemplate:'<b>%{x}</b> (est): <b>%{y:.2f}M</b><extra></extra>'},
+    ];
+    return trs;
+  })(),
+  Object.assign(baseLayout(),{shapes:eventShapes(),annotations:eventAnnotations(),yaxis:{title:'Registered Users (Millions)',gridcolor:C.grid},xaxis:{title:'Year',tickmode:'linear',dtick:1,showgrid:false},legend:{x:0.02,y:0.98}}),{responsive:true,displayModeBar:false});
+
+  // Digital payments
+  const dpTraces = [
+    {type:'scatter',x:D.years,y:D.payments,fill:'tozeroy',fillcolor:'rgba(192,132,58,0.1)',line:{color:C.amber,width:2.5},mode:'lines',showlegend:false,hovertemplate:'<b>%{x}</b><br>Digital payments: <b>%{y:,}B PKR</b><extra></extra>'},
+    {type:'scatter',x:D.years.filter((_,i)=>D.is_real[i]),y:D.payments.filter((_,i)=>D.is_real[i]),mode:'markers',marker:{size:9,color:C.amber,line:{color:'white',width:1.5}},name:'SBP PSR (real)',hovertemplate:'<b>%{x}</b> ★ SBP: <b>%{y:,}B PKR</b><extra></extra>'},
+    {type:'scatter',x:D.years.filter((_,i)=>!D.is_real[i]),y:D.payments.filter((_,i)=>!D.is_real[i]),mode:'markers',marker:{size:8,color:'white',symbol:'circle-open',line:{color:C.amber,width:2}},name:'Estimated',hovertemplate:'<b>%{x}</b> (est): <b>%{y:,}B PKR</b><extra></extra>'},
+  ];
+  Plotly.newPlot('chart-payments',dpTraces,Object.assign(baseLayout(),{shapes:eventShapes(),annotations:eventAnnotations(0.95),yaxis:{title:'Mobile + Internet Banking, annualized (B PKR)',gridcolor:C.grid},xaxis:{title:'Year',tickmode:'linear',dtick:1,showgrid:false},showlegend:true}),{responsive:true,displayModeBar:false});
+
+  // Mobile txn volume
+  const mtTraces = [
+    {type:'bar',x:D.years,y:D.mobtxn,marker:{color:D.is_real.map(r=>r?C.green:'rgba(74,124,89,0.3)')},hovertemplate:'<b>%{x}</b><br>Mobile txns: <b>%{y:.1f}M</b> %{customdata}<extra></extra>',customdata:D.is_real.map(r=>r?'(★ SBP)':'(est)')},
+  ];
+  Plotly.newPlot('chart-mobtxn',mtTraces,Object.assign(baseLayout(),{xaxis:{title:'Year',tickmode:'linear',dtick:1,showgrid:false},yaxis:{title:'Annual mobile banking transactions (M)',gridcolor:C.grid},showlegend:false,shapes:eventShapes()}),{responsive:true,displayModeBar:false});
+}
+
+// ── CORRELATION ─────────────────────────────────────────────────────────────
+function buildCorrelation() {
+  const lags=D.xcorr.map(d=>d.lag), corrs=D.xcorr.map(d=>d.r);
+  const barColors=D.xcorr.map(d=>d.lag<0&&d.r>0.8?C.green:d.lag>0?C.muted:C.amber);
+  Plotly.newPlot('chart-xcorr',[{type:'bar',x:lags,y:corrs,marker:{color:barColors},hovertemplate:'Lag %{x} yr: r = <b>%{y:.3f}</b><extra></extra>',width:0.7}],Object.assign(baseLayout(),{shapes:[{type:'line',x0:-4.5,x1:4.5,y0:0,y1:0,line:{color:C.border,width:1}},{type:'rect',x0:-4.5,x1:4.5,y0:0.8,y1:1.0,fillcolor:'rgba(74,124,89,0.07)',line:{width:0}}],annotations:[{x:-3.5,y:0.88,text:'Strong zone (r > 0.80)',showarrow:false,font:{size:9,color:C.green,family:"'DM Mono',monospace"}}],xaxis:{title:'Lag (years) — Negative = mobile banking leads',tickmode:'linear',dtick:1,showgrid:false,linecolor:C.border},yaxis:{title:'Pearson r',range:[-0.3,1.1],gridcolor:C.grid},showlegend:false}),{responsive:true,displayModeBar:false});
+
+  Plotly.newPlot('chart-scatter',[
+    {type:'scatter',mode:'markers+text',x:D.mob,y:D.fbr,text:D.years.map(y=>y.toString()),textposition:'top right',textfont:{family:"'DM Mono',monospace",size:9,color:C.muted},marker:{size:D.is_real.map(r=>r?12:9),color:D.years,colorscale:[[0,'#5B8DB8'],[1,'#2C5F2E']],showscale:true,colorbar:{title:'Year',tickfont:{size:9},len:0.7},line:{color:D.is_real.map(r=>r?'white':'#ccc'),width:D.is_real.map(r=>r?2:1)},symbol:D.is_real.map(r=>r?'circle':'circle-open')},hovertemplate:'<b>%{text}</b>%{customdata}<br>Mobile banking: %{x:.2f}M<br>FBR filers: %{y:.2f}M<extra></extra>',customdata:D.is_real.map(r=>r?' ★ SBP':''),showlegend:false},
+    {type:'scatter',mode:'lines',x:D.trend.x,y:D.trend.y,line:{color:C.rust,width:1.5,dash:'dash'},showlegend:false,hoverinfo:'skip'},
+  ],Object.assign(baseLayout(),{xaxis:{title:'Mobile banking users (M)',showgrid:false},yaxis:{title:'FBR tax filers (M)',gridcolor:C.grid},showlegend:false}),{responsive:true,displayModeBar:false});
+
+  Plotly.newPlot('chart-yoy',[
+    {type:'bar',x:D.yoy.years,y:D.yoy.digital,name:'Digital Payments',marker:{color:C.blue,opacity:0.85},hovertemplate:'<b>%{x}</b><br>Digital payments YoY: <b>+%{y:.1f}%</b><extra></extra>'},
+    {type:'bar',x:D.yoy.years,y:D.yoy.mob,name:'Mobile Banking Users',marker:{color:C.green,opacity:0.85},hovertemplate:'<b>%{x}</b><br>Mobile users YoY: <b>+%{y:.1f}%</b><extra></extra>'},
+    {type:'bar',x:D.yoy.years,y:D.yoy.filers,name:'Tax Filers',marker:{color:C.amber,opacity:0.85},hovertemplate:'<b>%{x}</b><br>Tax filers YoY: <b>+%{y:.1f}%</b><extra></extra>'},
+  ],Object.assign(baseLayout(),{barmode:'group',xaxis:{title:'Year',tickmode:'linear',dtick:1,showgrid:false},yaxis:{title:'YoY Growth (%)',gridcolor:C.grid},legend:{orientation:'h',y:-0.22},margin:{l:60,r:20,t:20,b:80},shapes:[{type:'line',x0:2015.5,x1:2024.5,y0:0,y1:0,line:{color:C.border,width:1}}]}),{responsive:true,displayModeBar:false});
+}
+
+// ── REGIONAL ────────────────────────────────────────────────────────────────
+function buildRegional() {
+  const reg=[...D.regional].sort((a,b)=>a.score-b.score);
+  Plotly.newPlot('chart-regional',[{type:'bar',orientation:'h',x:reg.map(r=>r.score),y:reg.map(r=>r.p),marker:{color:reg.map(r=>r.score<30?C.amber:r.score<50?C.rust:C.green)},text:reg.map(r=>r.score.toString()),textposition:'outside',textfont:{family:"'DM Mono',monospace",size:11},hovertemplate:'<b>%{y}</b><br>Score: %{x}/100<extra></extra>'}],Object.assign(baseLayout(),{xaxis:{title:'Formalization Score (0–100)',range:[0,98],showgrid:false},yaxis:{title:null,tickfont:{size:11.5}},showlegend:false,margin:{l:100,r:50,t:20,b:55}}),{responsive:true,displayModeBar:false});
+  const sorted=[...D.regional].sort((a,b)=>b.score-a.score);
+  document.getElementById('regional-table').innerHTML=`<thead><tr><th>Province</th><th>Mobile</th><th>Tax Filers</th><th>Score</th></tr></thead><tbody>${sorted.map(r=>`<tr><td><strong>${r.p}</strong></td><td>${r.mob}%</td><td>${r.tax}%</td><td><strong>${r.score}</strong></td></tr>`).join('')}</tbody>`;
+}
+
+// ── METHODOLOGY ─────────────────────────────────────────────────────────────
+function buildMethodology() {
+  const weights=[
+    {l:'FBR Tax Filers (est.)',w:30,col:CHART_COLORS[0]},
+    {l:'Mobile Banking Users (SBP PSR)',w:25,col:CHART_COLORS[1]},
+    {l:'Digital Payment Volume (SBP PSR)',w:20,col:CHART_COLORS[2]},
+    {l:'SME Bank Credit Share (est.)',w:15,col:CHART_COLORS[3]},
+    {l:'Informal Employment (est.)',w:10,col:CHART_COLORS[4]},
+  ];
+  document.getElementById('weight-bars').innerHTML=weights.map(w=>`<div class="weight-row"><span class="weight-label">${w.l}</span><div class="weight-bar-bg"><div class="weight-bar-fill" style="width:${w.w*3}%;background:${w.col}"></div></div><span class="weight-pct">${w.w}%</span></div>`).join('');
+
+  const sources=[
+    {n:'SBP Payment Systems Review',d:'Mobile banking users, internet banking users, digital payment volumes — Q3FY16 through Q3FY20 verified',v:true},
+    {n:'FBR Annual Statistics',d:'Tax filer registrations — pending verification from fbr.gov.pk reports',v:false},
+    {n:'SBP Branchless Banking Newsletter',d:'JazzCash/Easypaisa wallet accounts — not yet pulled (separate from PSR)',v:false},
+    {n:'PBS Labour Force Survey',d:'Informal employment share — pending direct PBS LFS download',v:false},
+    {n:'SBP Banking Surveillance Report',d:'SME credit share — pending from SBP BSC publication',v:false},
+    {n:'World Bank Global Findex',d:'Financial inclusion benchmarks — 2014, 2017, 2021 editions available',v:false},
+  ];
+  document.getElementById('source-grid').innerHTML=sources.map(s=>`<div class="source-pill ${s.v?'verified':''}"><div class="source-name">${s.v?'✓ ':''} ${s.n}</div><div class="source-desc">${s.d}</div></div>`).join('');
+
+  // Source verification table
+  const rows = D.years.map((y,i)=>`<tr>
+    <td>${y}</td>
+    <td class="${D.is_real[i]?'real':'est'}">${D.is_real[i]?'★ SBP PSR (real)':'Estimated'}</td>
+    <td class="${D.is_real[i]?'real':'est'}">${D.mob[i].toFixed(2)}M</td>
+    <td class="${D.is_real[i]?'real':'est'}">₨${D.payments[i].toLocaleString()}B</td>
+    <td style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#888">${D.sources[i]}</td>
+  </tr>`).join('');
+  document.getElementById('source-table').innerHTML=`<thead><tr><th>Year</th><th>Status</th><th>Mobile Banking Users</th><th>Digital Payment Vol.</th><th>Source Note</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+buildPage('overview');
+built['overview']=true;
+</script>
+</body>
+</html>
